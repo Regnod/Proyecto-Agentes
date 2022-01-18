@@ -1,18 +1,8 @@
 module Board where
 import MyRandom
-
--- utils
-replaceNTH0 list index newItem = let (first, x:xs) = splitAt index list in first++newItem:xs
-
-dirCoordinates :: (Eq a1, Num a1, Num a2, Num a3) => a2 -> a3 -> a1 -> (a2, a3)
-dirCoordinates x y d| d == 0 = (x+1, y) 
-                    | d == 1 = (x, y+1)
-                    | d == 2 = (x-1, y)
-                    | otherwise = (x, y-1)
+import Utils
 
 -- x y son las del punto a verificar x1 y1 los limites
-validPos :: (Ord a1, Ord a2, Num a1, Num a2) => a1 -> a2 -> a1 -> a2 -> Bool
-validPos x y x1 y1 = x >= 0 && y >= 0 && x < x1 && y < y1
 
 rowDim :: (Foldable t, Num b) => t a -> b
 rowDim = foldr (\ x -> (+) 1) 0
@@ -32,11 +22,12 @@ buildBoard x y t    | x == 1 = [row t y]
                     | otherwise = row t y : buildBoard (x-1) y t
 
 --      posibles objetos en el ambiente
--- 0 -> agentes (robot d ecasa)
+-- 0 -> empty
 -- 1 -> obstaculos
 -- 2 -> suciedad 
 -- 3 -> corral
 -- 4 -> niño
+-- 5 -> agentes (robot d ecasa)
 
 -- printBoard
 toString :: (Eq a, Num a) => a -> [Char]
@@ -79,25 +70,12 @@ checkHouse board    | clean >= 60 = True
 
 -- this function build the simulation board with the settings received
 
-index array i = array !! i
-
 makeSimulation settings board = 0
 
 getRandomNumber c o s n r = c + o*2 + s*3 + n*4+ r*5
 
 -- para hacer al final, correr el archivo desde un .py donde se coja una seed random en python y se mande a ejecutar el programa con esa seed como paramtreo asi lidiare con el random y que el tablero sea siempre distinto
 -- corral
-
--- r es el número que se va a utilizar para el random
--- r = la suma de todas las cantidades entre 7 cada una
-
-randomPos :: Foldable t => Int -> [t a] -> (Int, Int, Int)
-randomPos r board = 
-    let length0 = length board
-        length1 = length (head board)
-        (seed1, random1) = myRandom r length0
-        (seed2, random2) = myRandom seed1 length1
-    in (random1, random2, seed2)
 
 -- step 1 => corral = 3
 -- arreglar si el camino por el que se va creando el corral se ve acorralado contra una esquina y no puede terminar
@@ -111,7 +89,7 @@ fillCorral board x y amount seed| amount == 0 = board
                                                     newCol = replaceNTH0 col y1 3
                                                     newBoard = replaceNTH0 board x1 newCol
                                                     in
-                                                    if validPos x1 y1 (length board) (length (head board)) && ((board !! x1)!! y1) == 0
+                                                    if validPos_ x1 y1 (length board) (length (head board)) && ((board !! x1)!! y1) == 0
                                                     then
                                                         fillCorral newBoard x1 y1 (amount-1) newSeed
                                                     else
@@ -130,7 +108,7 @@ fillObstacles board x y amount seed | amount == 0 = board
                                                         newCol = replaceNTH0 col y1 1
                                                         newBoard = replaceNTH0 board x1 newCol
                                                     in
-                                                    if validPos x1 y1 (length board) (length (head board)) && ((board !! x1)!! y1) == 0
+                                                    if validPos_ x1 y1 (length board) (length (head board)) && ((board !! x1)!! y1) == 0
                                                     then
                                                         fillObstacles newBoard x1 y1 (amount-1) newSeed
                                                     else
@@ -149,7 +127,7 @@ fillDirty board x y amount seed | amount == 0 = board
                                                         newCol = replaceNTH0 col y1 2
                                                         newBoard = replaceNTH0 board x1 newCol
                                                     in
-                                                    if validPos x1 y1 (length board) (length (head board)) && ((board !! x1)!! y1) == 0
+                                                    if validPos_ x1 y1 (length board) (length (head board)) && ((board !! x1)!! y1) == 0
                                                     then
                                                         fillDirty newBoard x1 y1 (amount-1) newSeed
                                                     else
@@ -168,7 +146,7 @@ fillRobots board x y amount seed | amount == 0 = board
                                                         newCol = replaceNTH0 col y1 4
                                                         newBoard = replaceNTH0 board x1 newCol
                                                     in
-                                                    if validPos x1 y1 (length board) (length (head board)) && ((board !! x1)!! y1) == 0
+                                                    if validPos_ x1 y1 (length board) (length (head board)) && ((board !! x1)!! y1) == 0
                                                     then
                                                         fillRobots newBoard x1 y1 (amount-1) newSeed
                                                     else
@@ -187,7 +165,7 @@ fillChilds board x y amount seed | amount == 0 = board
                                                         newCol = replaceNTH0 col y1 5
                                                         newBoard = replaceNTH0 board x1 newCol
                                                     in
-                                                    if validPos x1 y1 (length board) (length (head board)) && ((board !! x1)!! y1) == 0
+                                                    if validPos_ x1 y1 (length board) (length (head board)) && ((board !! x1)!! y1) == 0
                                                     then
                                                         fillChilds newBoard x1 y1 (amount-1) newSeed
                                                     else
