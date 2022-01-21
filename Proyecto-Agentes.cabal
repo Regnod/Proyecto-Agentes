@@ -17,7 +17,7 @@ cabal-version:       >=1.10
 
 library
   -- exposed-modules:
-  other-modules: MyRandom Utils
+  other-modules: MyRandom Utils Recorridos
   -- other-extensions:
   build-depends:       base >=4.12 && <4.13, random, mtl>=2.2.2
   -- hs-source-dirs:
@@ -25,7 +25,7 @@ library
 
 executable Proyecto-Agentes
   main-is:             Main.hs
-  other-modules:       MyRandom Utils
+  other-modules:       MyRandom Utils Recorridos
   -- other-extensions:
   build-depends:       base >=4.12 && <4.13, random, mtl>=2.2.2
   -- hs-source-dirs:

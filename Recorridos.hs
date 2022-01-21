@@ -1,4 +1,4 @@
-module Dfs where
+module Recorridos where
 import Utils
 -- (x+1, y) 
 -- (x, y+1)
@@ -73,7 +73,6 @@ bfs nbs board visited (x0, y0) tracker =
     else
         getPathFromTracker tracker (x0, y0) [] ++ [(x0, y0)]
 
-
 getPathFromTracker tracker (x, y) path = 
     if indexBoard x y tracker /= (-1, -1)
     then
@@ -81,7 +80,58 @@ getPathFromTracker tracker (x, y) path =
         newPath = x':path
     in getPathFromTracker tracker x' newPath
     else path
-        
+
+-- bfs para encontrar el corral
+-- bfsCorral :: (Eq a, Num a) => [(Int, Int)]->[[a]]->[(Int, Int)]->a->[[(Int,Int)]]->[(Int, Int)]
+bfsCorral [] _ _ _ _= []
+bfsCorral nbs board visited value tracker = 
+    if let  (x_, y_) = head nbs
+            step = indexBoard x_ y_ board
+        in step /= value -- verificar que no esta ocupado para otro bfs
+    then
+    let (x, y) = head nbs
+        step_ = indexBoard x y board
+        in if step_ == 0 || step_ == 6
+            then
+            let newVisited = (x, y) : visited
+                xnbs = getValidNeighbors (x, y) board newVisited
+                newNbs = tail nbs ++ xnbs
+                newTracker = addToTracker (x, y) xnbs tracker
+            in bfsCorral newNbs board newVisited value newTracker
+            else
+            let newVisited = (x, y) : visited
+                -- xnbs = getValidNeighbors (x, y) board newVisited
+                newNbs = tail nbs -- ++ xnbs
+                -- newTracker = addToTracker (x, y) xnbs tracker
+            in bfsCorral newNbs board newVisited value tracker
+    else
+        getPathFromTracker tracker (head nbs) [] ++ [head nbs]
+
+-- bfs para encontrar lo mas cercano cuando el robot esta free
+bfsDumbRobot [] _ _ _= []
+bfsDumbRobot nbs board visited tracker = 
+    if let  (x_, y_) = head nbs
+            step = indexBoard x_ y_ board
+        in step /= 4 && step /=2 -- verificar que no esta ocupado para otro bfs
+    then
+    let (x, y) = head nbs
+        step_ = indexBoard x y board
+        in if step_ == 0 || step_ == 6 || step_ == 3
+            then
+            let newVisited = (x, y) : visited
+                xnbs = getValidNeighbors (x, y) board newVisited
+                newNbs = tail nbs ++ xnbs
+                newTracker = addToTracker (x, y) xnbs tracker
+            in bfsDumbRobot newNbs board newVisited newTracker
+            else
+            let newVisited = (x, y) : visited
+                -- xnbs = getValidNeighbors (x, y) board newVisited
+                newNbs = tail nbs -- ++ xnbs
+                -- newTracker = addToTracker (x, y) xnbs tracker
+            in bfsDumbRobot newNbs board newVisited tracker
+    else
+        getPathFromTracker tracker (head nbs) [] ++ [head nbs]
+
 -- para evitar el acorralamiento
 freeBfs [] board visited = []
 freeBfs nbs board visited = 
@@ -95,10 +145,15 @@ freeBfs nbs board visited =
         [head nbs]
 
 test = 
-    let board = buildBoard 5 5 0
+    let board =[[0,0,5,0,0,1,0],
+                [5,0,6,0,0,1,1],
+                [0,6,1,1,0,2,0],
+                [0,0,1,1,1,3,0],
+                [4,0,0,0,0,0,0]]
+        
         tracker = buildBoard 5 5 (-1,-1)
         start = (0,0)
-        path = bfs [start] board [] (3,4) tracker
+        path = bfsDumbRobot [start] board [] tracker
         in path
     -- in let  (x, y) = last path
     --         element = indexBoard x y

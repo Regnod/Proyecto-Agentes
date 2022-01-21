@@ -28,6 +28,7 @@ buildBoard x y t    | x == 1 = [row t y]
 -- 3 -> corral
 -- 4 -> niño
 -- 5 -> agentes (robot d ecasa)
+-- 6 -> niño encerrado en un pedazo de corral
 
 -- printBoard
 toString :: (Eq a, Num a) => a -> [Char]

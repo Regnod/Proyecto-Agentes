@@ -15,7 +15,7 @@ data Child = Child Int Int Int
 -- free -> 0 
 -- robot -> 1
 -- corral -> 2
--- TODO: terminar este metodo :)
+-- TODO: terminar este método :)
 canMoveObstacle = True
 
 checkNbs [] _ = []
@@ -59,4 +59,5 @@ childMove (w:ws) board seed childs =
                 -- remover el niño de la lista dado que se guardó en el corral
                 -- y no podrá moverse más
                 then childMove ws board newSeed (tail childs)
+                -- solo moverlo hacia atras porque no se puede mover por otras circunstancias
                 else childMove ws board newSeed (tail childs ++ [head childs])
