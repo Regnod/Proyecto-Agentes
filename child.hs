@@ -38,7 +38,7 @@ checkCanMove (x, y) board   | indexBoard x y board == 3 = False
 childMove [] board seed newChilds = (board, newChilds, seed)
 childMove (w:ws) board seed childs =
     let (willMove, newSeed) = fifty seed
-        (x, y) = w -- TODO: fix later if using types
+        (x, y) = w 
         canMove = checkCanMove w board
         validSides = checkSides w board
     in if willMove && canMove && validSides

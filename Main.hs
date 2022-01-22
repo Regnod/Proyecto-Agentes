@@ -1,14 +1,18 @@
 module Main where
-
-sumalista :: Num a => [a] -> a
-sumalista [] = 0
-sumalista (x:xs) = x + sumalista xs
-
-fibonacci n | n == 0 = 1
-            | n == 1 = 1
-            | otherwise = fibonacci (n - 1) + fibonacci (n - 2)
+import Board
+import DumbRobot
 
 main :: IO ()
-main = putStrLn "Hello, Haskell!"
+main = game --putStrLn "Hello, Haskell!"
 
--- game = 
+game = 
+    let board = makeBoard 3 4 2 2 123434 10 10
+        robots = [(0, 9, 0), (7, 2, 0)]
+        childs = [(1, 3, 0), (7, 6, 0)]
+        (newBoard, newRobots, newChilds) = moveDumbRobot robots board robots childs
+    in printBoard (boardToString newBoard)
+
+
+game1 = 
+    let board = makeBoard 3 4 2 2 123434 10 10
+    in printBoard (boardToString board)

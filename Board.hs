@@ -36,8 +36,9 @@ toString x  | x == 0 = "  "
             | x == 1 = "OB"
             | x == 2 = "SU"
             | x == 3 = "CO"
-            | x == 4 = "RC"
-            | otherwise = "NÑ"
+            | x == 4 = "NÑ"
+            | x == 5 = "RC"
+            | otherwise = "NC"
 
 arrayToString :: (Eq a, Num a) => [a] -> [Char]
 arrayToString [] = ""
