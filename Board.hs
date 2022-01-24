@@ -122,7 +122,7 @@ step2 r board amount =  let (x, y, seed) = randomPos r board
                             newBoard = replaceNTH0 board x newCol
                         in fillObstacles newBoard x y (amount-1) seed
 
--- step 3 => suciedad = 1
+-- step 3 => suciedad = 2
 fillDirty board x y amount seed | amount == 0 = board
                                     | otherwise = let   (x1, y1, newSeed) = randomPos seed board
                                                         col = board !! x1 
@@ -141,48 +141,61 @@ step3 r board amount =  let (x, y, seed) = randomPos r board
                             newBoard = replaceNTH0 board x newCol
                         in fillDirty newBoard x y (amount-1) seed
 
--- step 4 => robots = 1
-fillRobots board x y amount seed | amount == 0 = board
-                                    | otherwise = let   (x1, y1, newSeed) = randomPos seed board
-                                                        col = board !! x1 
-                                                        newCol = replaceNTH0 col y1 4
-                                                        newBoard = replaceNTH0 board x1 newCol
-                                                    in
-                                                    if validPos_ x1 y1 (length board) (length (head board)) && ((board !! x1)!! y1) == 0
-                                                    then
-                                                        fillRobots newBoard x1 y1 (amount-1) newSeed
-                                                    else
-                                                        fillRobots board x y amount newSeed
+-- step 4 => robots = 5
+fillRobots board x y amount seed    | amount == 0 = ([], board)
+                                    | otherwise = 
+    let (x1, y1, newSeed) = randomPos seed board
+        col = board !! x1 
+        newCol = replaceNTH0 col y1 5
+        midBoard = replaceNTH0 board x1 newCol
+        nextRobot = (x1, y1, 0)
+    in
+    if validPos_ x1 y1 (length board) (length (head board)) && ((board !! x1)!! y1) == 0
+    then
+        let (robots, newBoard) = fillRobots midBoard x1 y1 (amount-1) newSeed
+        in (nextRobot : robots, newBoard)
+    else
+        let (robots, newBoard) = fillRobots board x y amount newSeed
+        in (nextRobot : robots, newBoard)
 
 step4 r board amount =  let (x, y, seed) = randomPos r board
                             col = board !! x
-                            newCol = replaceNTH0 col y 4
-                            newBoard = replaceNTH0 board x newCol
-                        in fillRobots newBoard x y (amount-1) seed
+                            newCol = replaceNTH0 col y 5
+                            midBoard = replaceNTH0 board x newCol
+                            firstRobot = (x, y, 0)
+                            (robots, newBoard) = fillRobots midBoard x y (amount-1) seed 
+                        in (firstRobot:robots, newBoard) --fillRobots newBoard x y (amount-1) seed
 
 -- step 5 => robots = 1
-fillChilds board x y amount seed | amount == 0 = board
-                                    | otherwise = let   (x1, y1, newSeed) = randomPos seed board
-                                                        col = board !! x1 
-                                                        newCol = replaceNTH0 col y1 5
-                                                        newBoard = replaceNTH0 board x1 newCol
-                                                    in
-                                                    if validPos_ x1 y1 (length board) (length (head board)) && ((board !! x1)!! y1) == 0
-                                                    then
-                                                        fillChilds newBoard x1 y1 (amount-1) newSeed
-                                                    else
-                                                        fillChilds board x y amount newSeed
+fillChilds board x y amount seed    | amount == 0 = ([], board)
+                                    | otherwise =   
+    let (x1, y1, newSeed) = randomPos seed board
+        col = board !! x1 
+        newCol = replaceNTH0 col y1 4
+        midBoard = replaceNTH0 board x1 newCol
+        nextChild = (x1, y1, 0)
+    in
+    if validPos_ x1 y1 (length board) (length (head board)) && ((board !! x1)!! y1) == 0
+    then
+        let (childs, newBoard) = fillChilds midBoard x1 y1 (amount-1) newSeed
+        in (nextChild : childs, newBoard)
+    else
+        let (childs, newBoard) = fillChilds board x y amount newSeed
+        in (nextChild : childs, newBoard)
 
 step5 r board amount =  let (x, y, seed) = randomPos r board
                             col = board !! x
-                            newCol = replaceNTH0 col y 5
-                            newBoard = replaceNTH0 board x newCol
-                        in fillChilds newBoard x y (amount-1) seed
+                            newCol = replaceNTH0 col y 4
+                            midBoard = replaceNTH0 board x newCol
+                            firstChild = (x, y, 0)
+                            (childs, newBoard) = fillChilds midBoard x y (amount-1) seed
+                        in (firstChild:childs, newBoard)-- fillChilds newBoard x y (amount-1) seed
 
 -- test
 
-test = let  newBoard = makeBoard 3 4 2 2 1231434 10 10
-        in printBoard (boardToString newBoard)
+test = let  (robots, newBoard, childs) = makeBoard 3 4 2 2 1231434 10 10
+        -- in printBoard (boardToString newBoard)
+        in newBoard
 
 -- Make Board
 
@@ -190,6 +203,6 @@ makeBoard o s r n seed x y =let board = buildBoard x y 0 -- crear el board
                                 board1 = step1 seed board n -- añadir el corral
                                 board2 = step2 (seed+1) board1 o -- añadir los obstaculos
                                 board3 = step3 (seed-1) board2 s -- añadir los suciedad
-                                board4 = step4 (seed+2) board3 r -- añadir los robots
-                                newBoard = step5 (seed-2) board4 n -- añadir los niños
-                            in newBoard
+                                (robots, board4) = step4 (seed+2) board3 r -- añadir los robots
+                                (childs, newBoard) = step5 (seed-2) board4 n -- añadir los niños
+                            in (robots, newBoard, childs)

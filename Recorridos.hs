@@ -108,8 +108,8 @@ bfsCorral nbs board visited value tracker =
         getPathFromTracker tracker (head nbs) [] ++ [head nbs]
 
 -- bfs para encontrar lo mas cercano cuando el robot esta free
-bfsDumbRobot [] _ _ _= []
-bfsDumbRobot nbs board visited tracker = 
+bfsDumbRobotAux [] _ _ _= []
+bfsDumbRobotAux nbs board visited tracker = 
     if let  (x_, y_) = head nbs
             step = indexBoard x_ y_ board
         in step /= 4 && step /=2 -- verificar que no esta ocupado para otro bfs
@@ -122,16 +122,23 @@ bfsDumbRobot nbs board visited tracker =
                 xnbs = getValidNeighbors (x, y) board newVisited
                 newNbs = tail nbs ++ xnbs
                 newTracker = addToTracker (x, y) xnbs tracker
-            in bfsDumbRobot newNbs board newVisited newTracker
+            in bfsDumbRobotAux newNbs board newVisited newTracker
             else
             let newVisited = (x, y) : visited
                 -- xnbs = getValidNeighbors (x, y) board newVisited
                 newNbs = tail nbs -- ++ xnbs
                 -- newTracker = addToTracker (x, y) xnbs tracker
-            in bfsDumbRobot newNbs board newVisited tracker
+            in bfsDumbRobotAux newNbs board newVisited tracker
     else
         getPathFromTracker tracker (head nbs) [] ++ [head nbs]
-
+bfsDumbRobot nbs board visited tracker = 
+    let (x, y) = head nbs
+        newVisited = (x, y) : visited
+        xnbs = getValidNeighbors (x, y) board newVisited
+        newNbs = tail nbs ++ xnbs
+        newTracker = addToTracker (x, y) xnbs tracker
+        path = bfsDumbRobotAux newNbs board newVisited newTracker
+    in tail path 
 -- para evitar el acorralamiento
 freeBfs [] board visited = []
 freeBfs nbs board visited = 
@@ -145,16 +152,30 @@ freeBfs nbs board visited =
         [head nbs]
 
 test = 
-    let board =[[0,0,5,0,0,1,0],
-                [5,0,6,0,0,1,1],
-                [0,6,1,1,0,2,0],
-                [0,0,1,1,1,3,0],
-                [4,0,0,0,0,0,0]]
-        
-        tracker = buildBoard 5 5 (-1,-1)
-        start = (0,0)
+    let board =[[0,0,0,2,0,0,0,0,0,4],
+                [0,0,0,5,0,0,0,0,0,0],
+                [0,2,0,0,0,0,0,0,0,2],
+                [0,0,0,0,0,0,0,0,0,0],
+                [0,0,2,0,0,0,0,0,0,0],
+                [0,0,0,1,0,0,0,0,1,0],
+                [0,0,0,0,0,0,0,0,0,0],
+                [0,0,4,0,0,0,5,0,0,0],
+                [0,0,1,0,0,0,0,0,0,0],
+                [0,0,3,3,0,0,0,0,0,0]]
+        tracker = buildBoard 10 10 (-1,-1)
+        start = (7,6)
         path = bfsDumbRobot [start] board [] tracker
         in path
     -- in let  (x, y) = last path
     --         element = indexBoard x y
     --     in element
+    --[[(-1,-1),(-1,-1),(-1,-1),(-1,-1),(-1,-1),(-1,-1),(-1,-1),(-1,-1),(-1,-1),(-1,-1)],
+    -- [(-1,-1),(-1,-1),(-1,-1),(-1,-1),(-1,-1),(-1,-1),(-1,-1),(-1,-1),(-1,-1),(-1,-1)],
+    -- [(-1,-1),(-1,-1),(-1,-1),(-1,-1),(-1,-1),(-1,-1),(-1,-1),(-1,-1),(-1,-1),(-1,-1)],
+    -- [(-1,-1),(-1,-1),(-1,-1),(-1,-1),(-1,-1),(-1,-1),(-1,-1),(-1,-1),(-1,-1),(-1,-1)],
+    -- [(-1,-1),(-1,-1),(-1,-1),(-1,-1),(-1,-1),(-1,-1),(-1,-1),(-1,-1),(-1,-1),(-1,-1)],
+    -- [(-1,-1),(-1,-1),(-1,-1),(-1,-1),(-1,-1),(-1,-1),(-1,-1),(-1,-1),(-1,-1),(-1,-1)],
+    -- [(-1,-1),(-1,-1),(-1,-1),(-1,-1),(-1,-1),(-1,-1),(-1,-1),(-1,-1),(-1,-1),(-1,-1)],
+    -- [(-1,-1),(-1,-1),(-1,-1),(-1,-1),(-1,-1),(-1,-1),(-1,-1),(-1,-1),(-1,-1),(-1,-1)],
+    -- [(-1,-1),(-1,-1),(-1,-1),(-1,-1),(-1,-1),(-1,-1),(-1,-1),(-1,-1),(-1,-1),(-1,-1)],
+    -- [(-1,-1),(-1,-1),(-1,-1),(-1,-1),(-1,-1),(-1,-1),(-1,-1),(-1,-1),(-1,-1),(-1,-1)]]

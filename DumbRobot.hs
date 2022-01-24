@@ -20,8 +20,8 @@ spotNewPosition robot board (newx, newy) oldSpot childs | spot == 2 = -- camina 
         inBetweenBoard = replaceNTH0 board oldx newCol
         
         col1 = inBetweenBoard !! newx
-        newCol1 = replaceNTH0 col newy 5
-        newBoard = replaceNTH0 inBetweenBoard newx newCol
+        newCol1 = replaceNTH0 col1 newy 5
+        newBoard = replaceNTH0 inBetweenBoard newx newCol1
 
         newRobot = (newx, newy, 2)
     in  (newRobot, newBoard, childs)
@@ -32,8 +32,8 @@ spotNewPosition robot board (newx, newy) oldSpot childs | spot == 2 = -- camina 
         inBetweenBoard = replaceNTH0 board oldx newCol
         
         col1 = inBetweenBoard !! newx
-        newCol1 = replaceNTH0 col newy 5
-        newBoard = replaceNTH0 inBetweenBoard newx newCol
+        newCol1 = replaceNTH0 col1 newy 5
+        newBoard = replaceNTH0 inBetweenBoard newx newCol1
 
         newRobot = (newx, newy, 1)
         ((childx, childy, childState), index) = find newx newy childs 0
@@ -49,6 +49,15 @@ spotNewPosition robot board (newx, newy) oldSpot childs | spot == 2 = -- camina 
         -- newChild = (childx, childy, 2)
         -- newChilds = replaceNTH0 childs index newChild
     in  (newRobot, board, newChilds)
+                                                        | spot == 3 && state /= 1 = -- camina hacia una casilla corral 
+    let (oldx, oldy, state) = robot
+        newRobot = (newx, newy, 4)
+        newChilds = removeXY oldx oldy childs
+        -- ((childx, childy, childState), index) = find oldx oldy childs 0
+        -- -- eliminar ese niño de la lista de niños
+        -- newChild = (childx, childy, 2)
+        -- newChilds = replaceNTH0 childs index newChild
+    in  (newRobot, board, newChilds)
                                                         | otherwise = -- camina normalmente
     let (oldx, oldy, state) = robot
         col = board !! oldx
@@ -56,17 +65,16 @@ spotNewPosition robot board (newx, newy) oldSpot childs | spot == 2 = -- camina 
         inBetweenBoard = replaceNTH0 board oldx newCol
         
         col1 = inBetweenBoard !! newx
-        newCol1 = replaceNTH0 col newy 5
-        newBoard = replaceNTH0 inBetweenBoard newx newCol
-        newRobot = (newx, newy, 4)
+        newCol1 = replaceNTH0 col1 newy 5
+        newBoard = replaceNTH0 inBetweenBoard newx newCol1
+        newRobot = (newx, newy, 0)
     in (newRobot, newBoard, childs)
                                                         where   spot = indexBoard newx newy board
                                                                 (_, _, state) = robot
 
 cleanDirt robot = 
     let (x, y, _) = robot
-        newRobot = (x,y, 0)
-    in newRobot
+    in (x,y, 0)
 
 -- si al entrar a moveRobot no tiene estado 1 siempre se mueve solo 1 casilla por lo que longitude siempre es 1
 -- osea que no hace falta llamar recursivo despues de moverse esa ves
@@ -100,24 +108,27 @@ moveRobot robot board path longitude childs | longitude > 0 && not (null path) &
                                     where (oldx, oldy, state) = robot
 
 -- este metodo mueve un solo robot y devuelve el board y el robot luego de realizar el movimiento
-moveDumbRobot [] board  robots childs = (board, robots, childs)
+moveDumbRobot [] board  robots childs = (board, robots, childs)--(board, robots, childs)
 moveDumbRobot (r:rs) board  robots childs   | state == 2 =
     let newRobot = cleanDirt r
         newRobots = tail robots ++ [newRobot]
+    -- in (board, [], childs)
     in moveDumbRobot rs board newRobots childs
                                     | state == 1 = -- significa que carga un niño
     let (x, y, _) = r
-        tracker = buildBoard 5 5 (-1,-1)
+        tracker = buildBoard (length board) (length (head board)) (-1,-1)
         nearestPathToCorral = bfsCorral [(x,y)] board [] 3 tracker
         (newBoard, newRobot, newChilds) = moveRobot r board nearestPathToCorral 2 childs
         newRobots = tail robots ++ [newRobot]
+    -- in (board, nearestPathToCorral, childs)
     in moveDumbRobot rs newBoard newRobots newChilds
                                     | otherwise = -- significa que no carga un niño
     -- ver a donde me muevo y moverme
     let (x, y, _) = r
-        tracker = buildBoard 5 5 (-1,-1)
-        nearestPath = bfsDumbRobot [(x,y)] board [] tracker
+        tracker = buildBoard (length board) (length (head board)) (-1,-1)
+        nearestPath = bfsDumbRobot [(x, y)] board [] tracker
         (newBoard, newRobot, newChilds) = moveRobot r board nearestPath 1 childs
         newRobots = tail robots ++ [newRobot]
+    -- in (board, nearestPath, childs)
     in moveDumbRobot rs newBoard newRobots newChilds
                                     where (_, _, state) = r

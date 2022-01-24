@@ -40,7 +40,7 @@ find x y (o:os) i   | x1 == x && y1 == y = (o,i)
                     | otherwise = find x y os (i+1)
                     where (x1, y1, _) = o
 
-removeXY x y list = 
+removeXY x y list =
     let (_, index) = find x y list 0
     in  if index /= length list
         then let (first, x:xs) = splitAt index list in first++xs
