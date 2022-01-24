@@ -151,20 +151,46 @@ freeBfs nbs board visited =
     else
         [head nbs]
 
+bfsCorralSpotAux [] _ _ tracker last = getPathFromTracker tracker last [] ++ [last]
+bfsCorralSpotAux nbs board visited tracker last = 
+    let (x, y) = head nbs
+        step_ = indexBoard x y board
+        in if step_ == 3
+            then
+            let newVisited = (x, y) : visited
+                xnbs = getValidNeighbors (x, y) board newVisited
+                newNbs = tail nbs ++ xnbs
+                newTracker = addToTracker (x, y) xnbs tracker
+            in bfsCorralSpotAux newNbs board newVisited newTracker (x, y)
+            else
+            let newVisited = (x, y) : visited
+                -- xnbs = getValidNeighbors (x, y) board newVisited
+                newNbs = tail nbs -- ++ xnbs
+                -- newTracker = addToTracker (x, y) xnbs tracker
+            in bfsCorralSpotAux newNbs board newVisited tracker last
+bfsCorralSpot nbs board visited tracker = 
+    let (x, y) = head nbs
+        newVisited = (x, y) : visited
+        xnbs = getValidNeighbors (x, y) board newVisited
+        newNbs = tail nbs ++ xnbs
+        newTracker = addToTracker (x, y) xnbs tracker
+        path = bfsCorralSpotAux newNbs board newVisited newTracker (x, y)
+    in path 
+
 test = 
     let board =[[0,0,0,2,0,0,0,0,0,4],
                 [0,0,0,5,0,0,0,0,0,0],
-                [0,2,0,0,0,0,0,0,0,2],
-                [0,0,0,0,0,0,0,0,0,0],
-                [0,0,2,0,0,0,0,0,0,0],
-                [0,0,0,1,0,0,0,0,1,0],
+                [0,2,0,0,0,3,0,3,3,2],
+                [0,0,0,0,3,3,3,3,3,0],
+                [0,0,2,0,3,3,0,3,3,0],
+                [0,0,0,1,0,0,0,3,1,0],
                 [0,0,0,0,0,0,0,0,0,0],
                 [0,0,4,0,0,0,5,0,0,0],
                 [0,0,1,0,0,0,0,0,0,0],
                 [0,0,3,3,0,0,0,0,0,0]]
         tracker = buildBoard 10 10 (-1,-1)
-        start = (7,6)
-        path = bfsDumbRobot [start] board [] tracker
+        start = (3,4)
+        path = bfsCorralSpot [start] board [] tracker
         in path
     -- in let  (x, y) = last path
     --         element = indexBoard x y
