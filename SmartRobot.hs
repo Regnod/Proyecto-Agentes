@@ -23,7 +23,6 @@ moveSmartRobot (r:rs) board robots childs targets   | state == 2 = --arriba de u
                                                     where (_, _, state, _) = r
 
 moveWithChild r board path childs c targets | length path > 2 =
-
     let (x, y, state, target) = r
         (newx, newy) = path !! 1
         midBoard = changePlace board newx newy 5
