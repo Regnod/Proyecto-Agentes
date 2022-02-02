@@ -1,14 +1,15 @@
 module DumbRobot where
 import Utils
 import MyRandom
-import Recorridos
+import Recorridos 
+import Debug.Trace
 
 -- states
 -- free -> 0
 -- holding baby -> 1
 -- over a dirt -> 2
 -- leaving child -> 3
--- over a corral ->4
+-- over a corral -> 4
 
 -- oldSpot es lo que había antes en esa posición
 spotNewPosition robot board (newx, newy) oldSpot childs | spot == 2 = -- camina hacia una suciedad
@@ -42,23 +43,23 @@ spotNewPosition robot board (newx, newy) oldSpot childs | spot == 2 = -- camina 
     in  (newRobot, newBoard, newChilds)
                                                         | spot == 3 && state == 1 = -- camina hacia una casilla corral 
     let (oldx, oldy, state) = robot
-        newRobot = (newx, newy, 3)
-        newChilds = removeXY oldx oldy childs
-        -- ((childx, childy, childState), index) = find oldx oldy childs 0
+        col = board !! oldx
+        newCol = replaceNTH0 col oldy oldSpot
+        inBetweenBoard = replaceNTH0 board oldx newCol
+        
+        col1 = inBetweenBoard !! newx
+        newCol1 = replaceNTH0 col1 newy 5
+        newBoard = replaceNTH0 inBetweenBoard newx newCol1
+
+        newRobot = (newx, newy, 3)   
+        ((childx, childy, childState), index) = find oldx oldy childs 0
+        newChild = (newx, newy, 2)
+        newChilds = replaceNTH0 childs index newChild
         -- -- eliminar ese niño de la lista de niños
         -- newChild = (childx, childy, 2)
         -- newChilds = replaceNTH0 childs index newChild
-    in  (newRobot, board, newChilds)
+    in  (newRobot, newBoard, newChilds)
                                                         | spot == 3 && state /= 1 = -- camina hacia una casilla corral 
-    let (oldx, oldy, state) = robot
-        newRobot = (newx, newy, 4)
-        newChilds = removeXY oldx oldy childs
-        -- ((childx, childy, childState), index) = find oldx oldy childs 0
-        -- -- eliminar ese niño de la lista de niños
-        -- newChild = (childx, childy, 2)
-        -- newChilds = replaceNTH0 childs index newChild
-    in  (newRobot, board, newChilds)
-                                                        | otherwise = -- camina normalmente
     let (oldx, oldy, state) = robot
         col = board !! oldx
         newCol = replaceNTH0 col oldy oldSpot
@@ -67,8 +68,37 @@ spotNewPosition robot board (newx, newy) oldSpot childs | spot == 2 = -- camina 
         col1 = inBetweenBoard !! newx
         newCol1 = replaceNTH0 col1 newy 5
         newBoard = replaceNTH0 inBetweenBoard newx newCol1
-        newRobot = (newx, newy, 0)
-    in (newRobot, newBoard, childs)
+
+        newRobot = (newx, newy, 4)
+        -- newChilds = removeXY oldx oldy childs
+        -- ((childx, childy, childState), index) = find oldx oldy childs 0
+        -- newChild = (childx, childy, 2)
+        -- newChilds = replaceNTH0 childs index newChild
+    in  (newRobot, newBoard, childs)
+                                                        | otherwise = -- camina normalmente
+    
+    let (oldx, oldy, state) = robot
+    in if state == 3 || state == 4
+        then
+            let col = board !! oldx
+                newCol = replaceNTH0 col oldy oldSpot
+                inBetweenBoard = replaceNTH0 board oldx newCol
+
+                col1 = inBetweenBoard !! newx
+                newCol1 = replaceNTH0 col1 newy 5
+                newBoard = replaceNTH0 inBetweenBoard newx newCol1
+                newRobot = (newx, newy, 0)
+            in (newRobot, newBoard, childs)
+        else
+            let col = board !! oldx
+                newCol = replaceNTH0 col oldy oldSpot
+                inBetweenBoard = replaceNTH0 board oldx newCol
+                
+                col1 = inBetweenBoard !! newx
+                newCol1 = replaceNTH0 col1 newy 5
+                newBoard = replaceNTH0 inBetweenBoard newx newCol1
+                newRobot = (newx, newy, state)
+            in (newRobot, newBoard, childs)
                                                         where   spot = indexBoard newx newy board
                                                                 (_, _, state) = robot
 
@@ -95,12 +125,20 @@ moveRobot robot board path longitude childs | longitude > 0 && not (null path) &
         (newRobot, newBoard, newChilds)= spotNewPosition robot board (head path) 0 childs
     in (newBoard, newRobot, newChilds)-- moveRobot newRobot newBoard (tail path) (longitude-1) newChilds
     -- este es el caso para cuando carga el niño, solo entra aqui en caso de cargar uno
+    --                                     | longitude > 0 && null path && state == 1 =
+    -- let (oldx, oldy, state) = robot
+    --     (newx, newy) = head path
+    --     (newRobot, newBoard, newChilds)= spotNewPosition robot board (head path) 0 childs
+    --     (_, _, currentState) = newRobot
+    --     -- cuando se mueve continua teniendo estado 1 o pasa a estado 3 y cesa el movimiento
+    -- in (newBoard, (0,0,10), newChilds) 
                                         | longitude > 0 && not (null path) && state == 1 =
     let (oldx, oldy, state) = robot
         (newx, newy) = head path
         (newRobot, newBoard, newChilds)= spotNewPosition robot board (head path) 0 childs
         (_, _, currentState) = newRobot
         -- cuando se mueve continua teniendo estado 1 o pasa a estado 3 y cesa el movimiento
+    -- in (newBoard, (0,0,10), newChilds) 
     in if currentState == 3 
         then (newBoard, newRobot, newChilds) 
         else moveRobot newRobot newBoard (tail path) (longitude-1) newChilds
@@ -109,7 +147,7 @@ moveRobot robot board path longitude childs | longitude > 0 && not (null path) &
 
 -- este metodo mueve un solo robot y devuelve el board y el robot luego de realizar el movimiento
 moveDumbRobot [] board  robots childs = (board, robots, childs)--(board, robots, childs)
-moveDumbRobot (r:rs) board  robots childs   | state == 2 =
+moveDumbRobot (r:rs) board  robots childs   | state == 2 = --arriba de una suciedad
     let newRobot = cleanDirt r
         newRobots = tail robots ++ [newRobot]
     -- in (board, [], childs)
@@ -117,11 +155,24 @@ moveDumbRobot (r:rs) board  robots childs   | state == 2 =
                                     | state == 1 = -- significa que carga un niño
     let (x, y, _) = r
         tracker = buildBoard (length board) (length (head board)) (-1,-1)
-        nearestPathToCorral = bfsCorral [(x,y)] board [] 3 tracker
-        (newBoard, newRobot, newChilds) = moveRobot r board nearestPathToCorral 2 childs
-        newRobots = tail robots ++ [newRobot]
-    -- in (board, nearestPathToCorral, childs)
+        changedBoard = changePlace board x y 0
+        (path, c) = bfsToCorral (x, y) changedBoard
+        (newRobot, newBoard, newChilds) =  moveWithChild r board path childs c
+        newRobots = trace (show (newChilds++[newRobot])++"hola") tail robots ++ [newRobot]
     in moveDumbRobot rs newBoard newRobots newChilds
+    -- let (x, y, _) = r
+    --     tracker = buildBoard (length board) (length (head board)) (-1,-1)
+    --     changedBoard = changePlace board x y 0
+    --     nearestPathToCorral = bfsCorral [(x,y)] changedBoard [] 3 tracker
+    -- in if not (null nearestPathToCorral)
+    --     then 
+    --         let (newBoard, newRobot, newChilds) = moveRobot r board (tail nearestPathToCorral) 2 childs
+    --             newRobots = tail robots ++ [newRobot]
+    --         in moveDumbRobot rs newBoard newRobots newChilds
+    -- -- in (board, nearestPathToCorral, childs)
+    --     else 
+    --         let newRobots = tail robots ++ [r]
+    --         in moveDumbRobot rs board newRobots childs
                                     | otherwise = -- significa que no carga un niño
     -- ver a donde me muevo y moverme
     let (x, y, _) = r
@@ -132,3 +183,67 @@ moveDumbRobot (r:rs) board  robots childs   | state == 2 =
     -- in (board, nearestPath, childs)
     in moveDumbRobot rs newBoard newRobots newChilds
                                     where (_, _, state) = r
+
+moveWithChild r board path childs c | length path > 2 =
+    let (x, y, state) = r
+        (newx, newy) = path !! 1
+        midBoard = changePlace board newx newy 5
+    in if c 
+        then
+            let newBoard = changePlace midBoard x y 3
+                newRobot = (newx, newy, state)
+                ((childx, childy, childState), index) = find x y childs 0
+                newChild = (newx, newy, 1)
+                newChilds = replaceNTH0 childs index newChild
+            in (newRobot, newBoard, newChilds)
+        else
+            let newBoard = changePlace midBoard x y 0
+                newRobot = (newx, newy, state)
+                ((childx, childy, childState), index) = find x y childs 0
+                newChild = (newx, newy, 1)
+                newChilds = replaceNTH0 childs index newChild
+            in (newRobot, newBoard, newChilds)
+                                    | length path == 2 =
+    let (x, y, state) = r
+        (newx, newy) = path !! 1
+        midBoard = changePlace board newx newy 5 
+    in if c 
+        then
+            let newBoard = changePlace midBoard x y 3
+                newRobot = (newx, newy, 3)
+                -- newChilds = removeXY x y childs
+                ((childx, childy, childState), index) = trace (show (find x y childs 0)) find x y childs 0
+                newChild = (newx, newy, 2)
+                newChilds = replaceNTH0 childs index newChild
+            in (newRobot, newBoard, newChilds)
+        else
+            let newBoard = changePlace midBoard x y 0
+                newRobot = (newx, newy, 3)
+                ((childx, childy, childState), index) = find x y childs 0
+                newChild = (newx, newy, 2)
+                newChilds = replaceNTH0 childs index newChild
+            in (newRobot, newBoard, newChilds)
+                                    | length path == 1 =
+    let (x, y, state) = r
+        (newx, newy) = head path
+        midBoard = changePlace board newx newy 5
+    in if c 
+        then
+            let newBoard = changePlace midBoard x y 3
+                newRobot = (newx, newy, 3)
+                ((childx, childy, childState), index) = find x y childs 0
+                newChild = (newx, newy, 2)
+                newChilds = replaceNTH0 childs index newChild
+            in (newRobot, newBoard, newChilds)
+        else
+            let newBoard = changePlace midBoard x y 0
+                newRobot = (newx, newy, 3)
+                ((childx, childy, childState), index) = find x y childs 0
+                newChild = (newx, newy, 2)
+                newChilds = replaceNTH0 childs index newChild
+            in (newRobot, newBoard, newChilds)
+                                    | otherwise = (r, board, childs)
+
+lets a b    | a == 1 = 2
+            | a == 1 &&  b == 2 = 1
+            |otherwise =3

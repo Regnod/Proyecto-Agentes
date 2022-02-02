@@ -45,3 +45,27 @@ removeXY x y list =
     in  if index /= length list
         then let (first, x:xs) = splitAt index list in first++xs
         else let (first, xs) = splitAt index list in first
+
+changePlace board x y element =
+    let col = board !! x
+        newCol = replaceNTH0 col y element
+        newBoard = replaceNTH0 board x newCol
+    in newBoard
+
+deleteElement list index =
+    if index == 0 then tail list
+    else
+        let (a, b) = splitAt index list
+        in if not (null b) then a ++ tail b else list
+
+checkForNotEmptyBoardAux board x y  | validPos_ x y c l && (spot == 2 || spot == 4) = True
+                                    | otherwise =
+    let l = length (head board)
+        c = length board
+    in c /= x && (if l == y 
+                    then checkForNotEmptyBoardAux board (x+1) 0 
+                    else  checkForNotEmptyBoardAux board x (y+1))
+                                    where   spot = indexBoard x y board
+                                            l = length (head board)
+                                            c = length board
+checkForNotEmptyBoard board = checkForNotEmptyBoardAux board 0 0

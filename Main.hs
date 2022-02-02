@@ -1,8 +1,10 @@
 module Main where
-import Board
-import DumbRobot
-import MyRandom
-
+import Board ( boardToString, printBoard, checkHouse, makeBoard )
+import DumbRobot ( moveDumbRobot )
+import MyRandom ( myRandom )
+import Child ( childMove, getPastPossWithPresentState )
+import Debug.Trace
+import Environment
 main :: IO ()
 main = putStrLn (gameLoop 4 123458489 3 4 2 2 10 10)--putStrLn "Hello, Haskell!"
 
@@ -40,13 +42,44 @@ gameLoop t seed o s r n x y=
         (robots, board, childs) = makeBoard o s r n number x y
     in game robots board childs t newSeed
 
-game robots board childs t newSeed =
+game robots board childs t seed =
     let t1 = t-1
     in if checkHouse board
         then "ended"
-        else game robots board childs t newSeed
+        else let (newBoard, newRobots, newChilds, newSeed) = myCycle t robots board childs seed
+            in game newRobots newBoard newChilds t newSeed
 
 
-myCycle t robots board childs =
-    let (newBoard, newRobots, newChilds) = moveDumbRobot robots board robots childs
-    in myCycle (t-1) newRobots newBoard newChilds
+myCycle t robots board childs seed  | t == 0 = (board, robots, childs, seed)
+                                    | otherwise =
+    let (midBoard, newRobots, midChilds) = moveDumbRobot robots board robots childs
+        (newBoard, newChilds, newSeed) = childMove midChilds midBoard seed midChilds
+    -- let (newBoard, newChilds, newSeed) = childMove childs board seed childs
+        -- (newBoard, newChilds) = (midBoard, midChilds)
+        -- newRobots = robots
+        -- newSeed = seed
+    in myCycle (t-1) newRobots newBoard newChilds newSeed
+
+testCycle t = 
+    let seed = 545465114
+        (robots, board, childs) = makeBoard 3 4 2 2 seed 10 10
+        (newBoard, newRobots, newChild, newSeed) = myCycle t robots board childs seed
+    in printBoard (boardToString newBoard)
+simulate t times= 
+    let seed = 545465114
+        -- times = 2
+        (robots, board, childs) = makeBoard 3 4 2 2 seed 10 10
+        (newBoard, newRobots, newChild, newSeed) = simulation robots board childs times seed t
+    in printBoard (boardToString newBoard)
+
+simulation robots board childs times seed t | times == 0 = (board, robots, childs, seed)
+                                            | otherwise =
+    let (firstBoard, firstRobots, firstChilds, firstSeed) = myCycle (t-1) robots board childs seed
+        (midBoard, newRobots, newChilds, midSeed) = myCycle 1 firstRobots firstBoard firstChilds firstSeed
+        midChilds = trace (show (firstChilds++newChilds)) getPastPossWithPresentState firstChilds newChilds
+        (newBoard, newSeed) = spawnMultipleDirt midChilds midBoard midSeed
+    in simulation newRobots newBoard newChilds (times-1) newSeed t
+    -- in if checkHouse board
+    --     then (board, robots, childs, seed)
+    --     else let (newBoard, newRobots, newChilds, newSeed) = myCycle t robots board childs seed
+    --         in simulation newRobots newBoard newChilds (times-1) newSeed t

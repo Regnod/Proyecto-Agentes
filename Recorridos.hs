@@ -1,5 +1,6 @@
 module Recorridos where
 import Utils
+import Debug.Trace
 -- (x+1, y) 
 -- (x, y+1)
 -- (x-1, y)
@@ -33,7 +34,7 @@ getValidNeighbors nb board visited =
 -- dfs :: [(Int, Int)] -> [[a]] -> [(Int, Int)] -> (Int, Int) -> [(Int, Int)]
 
 dfs [] board visited (_, _) = []
-dfs nbs board visited (x0, y0) = 
+dfs nbs board visited (x0, y0) =
     if (x0, y0) /= head nbs
     then
     let (x, y) = head nbs
@@ -54,14 +55,14 @@ dfs nbs board visited (x0, y0) =
 --     else
 --         visited
 addToTracker _ [] tracker = tracker
-addToTracker x' (x:xs) tracker = let    (x1, y1) = x 
-                                        col = tracker !! x1 
+addToTracker x' (x:xs) tracker = let    (x1, y1) = x
+                                        col = tracker !! x1
                                         newCol = replaceNTH0 col y1 x'
                                         newTracker = replaceNTH0 tracker x1 newCol
                                 in addToTracker x' xs newTracker
 
 bfs [] _ _ _ _= []
-bfs nbs board visited (x0, y0) tracker = 
+bfs nbs board visited (x0, y0) tracker =
     if (x0, y0) /= head nbs -- verificar que no esta ocupado para otro bfs
     then
     let (x, y) = head nbs
@@ -73,7 +74,7 @@ bfs nbs board visited (x0, y0) tracker =
     else
         getPathFromTracker tracker (x0, y0) [] ++ [(x0, y0)]
 
-getPathFromTracker tracker (x, y) path = 
+getPathFromTracker tracker (x, y) path =
     if indexBoard x y tracker /= (-1, -1)
     then
     let x' = indexBoard x y tracker
@@ -84,14 +85,14 @@ getPathFromTracker tracker (x, y) path =
 -- bfs para encontrar el corral
 -- bfsCorral :: (Eq a, Num a) => [(Int, Int)]->[[a]]->[(Int, Int)]->a->[[(Int,Int)]]->[(Int, Int)]
 bfsCorral [] _ _ _ _= []
-bfsCorral nbs board visited value tracker = 
+bfsCorral nbs board visited value tracker =
     if let  (x_, y_) = head nbs
             step = indexBoard x_ y_ board
         in step /= value -- verificar que no esta ocupado para otro bfs
     then
     let (x, y) = head nbs
         step_ = indexBoard x y board
-        in if step_ == 0 || step_ == 6
+        in if step_ == 0
             then
             let newVisited = (x, y) : visited
                 xnbs = getValidNeighbors (x, y) board newVisited
@@ -109,7 +110,7 @@ bfsCorral nbs board visited value tracker =
 
 -- bfs para encontrar lo mas cercano cuando el robot esta free
 bfsDumbRobotAux [] _ _ _= []
-bfsDumbRobotAux nbs board visited tracker = 
+bfsDumbRobotAux nbs board visited tracker =
     if let  (x_, y_) = head nbs
             step = indexBoard x_ y_ board
         in step /= 4 && step /=2 -- verificar que no esta ocupado para otro bfs
@@ -131,17 +132,20 @@ bfsDumbRobotAux nbs board visited tracker =
             in bfsDumbRobotAux newNbs board newVisited tracker
     else
         getPathFromTracker tracker (head nbs) [] ++ [head nbs]
-bfsDumbRobot nbs board visited tracker = 
+bfsDumbRobot nbs board visited tracker  | checkForNotEmptyBoard board =
     let (x, y) = head nbs
         newVisited = (x, y) : visited
         xnbs = getValidNeighbors (x, y) board newVisited
         newNbs = tail nbs ++ xnbs
         newTracker = addToTracker (x, y) xnbs tracker
         path = bfsDumbRobotAux newNbs board newVisited newTracker
-    in tail path 
+    in if not (null path)
+        then tail path
+        else []
+                                        | otherwise = []
 -- para evitar el acorralamiento
 freeBfs [] board visited = []
-freeBfs nbs board visited = 
+freeBfs nbs board visited =
     if let (x0, y0) = head nbs in (board!!x0)!!y0 /= 0
     then
     let (x, y) = head nbs
@@ -152,7 +156,7 @@ freeBfs nbs board visited =
         [head nbs]
 
 bfsCorralSpotAux [] _ _ tracker last = getPathFromTracker tracker last [] ++ [last]
-bfsCorralSpotAux nbs board visited tracker last = 
+bfsCorralSpotAux nbs board visited tracker last =
     let (x, y) = head nbs
         step_ = indexBoard x y board
         in if step_ == 3
@@ -168,29 +172,46 @@ bfsCorralSpotAux nbs board visited tracker last =
                 newNbs = tail nbs -- ++ xnbs
                 -- newTracker = addToTracker (x, y) xnbs tracker
             in bfsCorralSpotAux newNbs board newVisited tracker last
-bfsCorralSpot nbs board visited tracker = 
+bfsCorralSpot nbs board visited tracker =
     let (x, y) = head nbs
         newVisited = (x, y) : visited
         xnbs = getValidNeighbors (x, y) board newVisited
         newNbs = tail nbs ++ xnbs
         newTracker = addToTracker (x, y) xnbs tracker
         path = bfsCorralSpotAux newNbs board newVisited newTracker (x, y)
-    in path 
+    in path
 
-test = 
-    let board =[[0,0,0,2,0,0,0,0,0,4],
+bfsToCorral (x, y) board =
+    let tracker = buildBoard (length board) (length (head board)) (-1,-1)
+        path = bfsCorral [(x, y)] board [] 3 tracker
+    in if not (null (tail path))
+        then
+            let midPath = deleteElement path (length path -1)
+                (lastx, lasty) = path !! (length path -1)
+                corralPath = bfsCorralSpot [(lastx, lasty)] board [] tracker
+                finalPath = midPath ++ corralPath
+            in (tail finalPath, False)
+        else
+            let
+                finalPath = bfsCorralSpot [(x, y)] board [] tracker
+            in (tail finalPath, True)
+emptyList = []
+test =
+    let board =[[0,0,0,0,0,0,0,0,0,0],
                 [0,0,0,5,0,0,0,0,0,0],
-                [0,2,0,0,0,3,0,3,3,2],
+                [0,0,0,0,0,3,0,3,3,2],
                 [0,0,0,0,3,3,3,3,3,0],
-                [0,0,2,0,3,3,0,3,3,0],
+                [0,0,0,0,3,3,0,3,3,0],
                 [0,0,0,1,0,0,0,3,1,0],
                 [0,0,0,0,0,0,0,0,0,0],
-                [0,0,4,0,0,0,5,0,0,0],
+                [0,0,0,0,0,0,5,0,0,0],
                 [0,0,1,0,0,0,0,0,0,0],
                 [0,0,3,3,0,0,0,0,0,0]]
         tracker = buildBoard 10 10 (-1,-1)
-        start = (3,4)
-        path = bfsCorralSpot [start] board [] tracker
+        start = (3,3)
+        path = checkForNotEmptyBoard board
+        -- path = bfsCorral [start] board [] 3 tracker
+        -- path = bfsToCorral start board
         in path
     -- in let  (x, y) = last path
     --         element = indexBoard x y

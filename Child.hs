@@ -30,7 +30,7 @@ checkNbs (w:ws) board x y   | element == 0 = w : checkNbs ws board x y
                             | element == 1 &&  obstacleCanBeMove = w : checkNbs ws board x y
                             | otherwise = checkNbs ws board x y
                             where   (x1, y1) = w
-                                    element = if validPos_ x1 y1 (length board) (length (head board)) 
+                                    element = if validPos_ x1 y1 (length board) (length (head board))
                                                 then indexBoard x1 y1 board
                                                 else -1
                                     d = getDirection x y x1 y1
@@ -72,14 +72,21 @@ childMove (w:ws) board seed childs =
 
                         newChild = (newx, newy, state)
                         newChilds = tail childs ++ [newChild]
-                    in childMove ws newBoard newSeed newChilds
+                    in childMove ws newBoard nextSeed newChilds
         else if state == 2
                 -- remover el niño de la lista dado que se guardó en el corral
                 -- y no podrá moverse más(probablemente nunca entre a este if :D )
-                then childMove ws board newSeed (tail childs)
+                then childMove ws board newSeed (tail childs++[w])
                 -- solo moverlo hacia atras porque no se puede mover por otras circunstancias
                 else childMove ws board newSeed (tail childs ++ [head childs])
 
+getPastPossWithPresentState [] _ = []
+getPastPossWithPresentState _ [] = []
+getPastPossWithPresentState (pastc:pastcs) (presentc:presentcs) =
+    let (x, y, _) = pastc
+        (_, _, state) = presentc
+        newChild = (x, y, state)
+    in newChild:getPastPossWithPresentState pastcs presentcs
 test = let  board=[ [0,0,0,2,0,0,0,0,0,4],
                     [0,0,0,5,0,0,0,0,0,0],
                     [0,2,0,0,0,0,0,0,0,2],
@@ -124,7 +131,7 @@ moveObstacles board d x y s | d == 1 =
         newBoard = replaceNTH0 mBoard (x-1) newNewCol
         child = (x, y, s)
     in (newBoard, child)
-                            | d == 2 = 
+                            | d == 2 =
     let (obstacleItCanBeMove, howMany) = canMoveObstacle d board x y 0
         x1 = x - howMany
         fcol = board !! x1
@@ -140,7 +147,7 @@ moveObstacles board d x y s | d == 1 =
         newBoard = replaceNTH0 mBoard (x+1) newNewCol
         child = (x, y, s)
     in (newBoard, child)
-                            | d == 3 = 
+                            | d == 3 =
     let (obstacleItCanBeMove, howMany) = canMoveObstacle d board x y 0
         y1 = y + howMany
         fcol = board !! x
@@ -156,7 +163,7 @@ moveObstacles board d x y s | d == 1 =
         newBoard = replaceNTH0 mBoard x newNewCol
         child = (x, y, s)
     in (newBoard, child)
-                            | otherwise = 
+                            | otherwise =
     let (obstacleItCanBeMove, howMany) = canMoveObstacle d board x y 0
         y1 = y - howMany
         fcol = board !! x
