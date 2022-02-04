@@ -87,14 +87,19 @@ notTargeted (x, y) (t:ts)   | x == x' && y' == y = False
                             | otherwise = notTargeted (x, y) ts
                             where (x', y', _) = t
 
+-- x, y es el robot y p el punto a donde ir
+match (x, y) (x', y') targets =
+    let ((x1, y1, (_, _)), i) = findTargetByR (x, y) targets 0
+    in i /= -1 && x1 == x' && y' == y1
+
 targeted (x,y) targets = not (notTargeted (x,y) targets)
 
-getPathFromTrackerWithTargets [] _ _ path = path
-getPathFromTrackerWithTargets (p:ps) tracker targets currentPath    
-    | notTargeted p targets = getPathFromTracker tracker p [p]
-    | otherwise = getPathFromTrackerWithTargets ps tracker targets currentPath
+getPathFromTrackerWithTargets [] _ _ path _ = path
+getPathFromTrackerWithTargets (p:ps) tracker targets currentPath (x, y)
+    | notTargeted p targets || match (x, y) p targets = getPathFromTracker tracker p [p]
+    | otherwise = getPathFromTrackerWithTargets ps tracker targets currentPath (x, y)
 
-prioritizeChildsAux [] childs dirts _ = childs ++ dirts 
+prioritizeChildsAux [] childs dirts _ = childs ++ dirts
 prioritizeChildsAux (p:ps) childs dirts board   | spot == 4 = prioritizeChildsAux ps (childs++[p]) dirts board
                                                 | otherwise = prioritizeChildsAux ps childs (dirts++[p]) board
                                                 where   (x, y) = p
@@ -102,31 +107,7 @@ prioritizeChildsAux (p:ps) childs dirts board   | spot == 4 = prioritizeChildsAu
 
 prioritizeChilds endPoints board = prioritizeChildsAux endPoints [] [] board
 
--- bfs para encontrar el corral
--- bfsCorral :: (Eq a, Num a) => [(Int, Int)]->[[a]]->[(Int, Int)]->a->[[(Int,Int)]]->[(Int, Int)]
-bfsCorral [] _ _ _ _= []
-bfsCorral nbs board visited value tracker =
-    if let  (x_, y_) = head nbs
-            step = indexBoard x_ y_ board
-        in step /= value -- verificar que no esta ocupado para otro bfs
-    then
-    let (x, y) = head nbs
-        step_ = indexBoard x y board
-        in if step_ == 0
-            then
-            let newVisited = (x, y) : visited
-                xnbs = getValidNeighbors (x, y) board (newVisited++tail nbs)
-                newNbs = tail nbs ++ xnbs
-                newTracker = addToTracker (x, y) xnbs tracker
-            in bfsCorral newNbs board newVisited value newTracker
-            else
-            let newVisited = (x, y) : visited
-                -- xnbs = getValidNeighbors (x, y) board newVisited
-                newNbs = tail nbs -- ++ xnbs
-                -- newTracker = addToTracker (x, y) xnbs tracker
-            in bfsCorral newNbs board newVisited value tracker
-    else
-        getPathFromTracker tracker (head nbs) [] ++ [head nbs]
+
 
 -- bfs para encontrar lo mas cercano cuando el robot esta free
 bfsDumbRobotAux [] _ _ _= []
@@ -172,9 +153,9 @@ bfsSmartRobot (x, y) board targets | checkForNotEmptyBoard board =
         endPoints = prioritizeChilds firstEndPoints board
     in if not (null endPoints)
         then
-            let firstPath =  getPathFromTracker newTracker (head endPoints) [head endPoints]
+            let firstPath = getPathFromTracker newTracker (head endPoints) [head endPoints]
                 -- haya el camino de menor longitud entre todos los targets posibles
-                path = getPathFromTrackerWithTargets endPoints newTracker targets firstPath
+                path = getPathFromTrackerWithTargets endPoints newTracker targets firstPath (x, y)
                 (x', y') = last path
                 -- incluir el target si no esta, en caso de estar no hacer nada
                 newTargets = if notTargeted (x', y') targets then (x', y', (x, y)):targets else targets
@@ -202,9 +183,9 @@ bfsSmartRobotAux nbs board visited tracker endPoints
             step = indexBoard x y board
         --getPathFromTracker tracker (head nbs) [] ++ [head nbs]
 -- para evitar el acorralamiento
-freeBfs nbs board visited amount 
-    | amount == 0 = trace "sad" board
-    | otherwise = 
+freeBfs nbs board visited amount
+    | amount == 0 = board
+    | otherwise =
         let (x, y) = head nbs
             newVisited = (x, y) : visited
             newNbs = tail nbs ++ getValidNeighbors (x, y) board (newVisited++tail nbs)
@@ -236,11 +217,35 @@ bfsCorralSpot nbs board visited tracker =
         newTracker = addToTracker (x, y) xnbs tracker
         path = bfsCorralSpotAux newNbs board newVisited newTracker (x, y)
     in path
-
+-- bfs para encontrar el corral
+-- bfsCorral :: (Eq a, Num a) => [(Int, Int)]->[[a]]->[(Int, Int)]->a->[[(Int,Int)]]->[(Int, Int)]
+bfsCorral [] _ _ _ _= []
+bfsCorral nbs board visited value tracker =
+    if let  (x_, y_) = head nbs
+            step = indexBoard x_ y_ board
+        in step /= value -- verificar que no esta ocupado para otro bfs
+    then
+    let (x, y) = head nbs
+        step_ = indexBoard x y board
+        in if step_ == 0 || step_ == 2
+            then
+            let newVisited = (x, y) : visited
+                xnbs = getValidNeighbors (x, y) board (newVisited++tail nbs)
+                newNbs = tail nbs ++ xnbs
+                newTracker = addToTracker (x, y) xnbs tracker
+            in bfsCorral newNbs board newVisited value newTracker
+            else
+            let newVisited = (x, y) : visited
+                -- xnbs = getValidNeighbors (x, y) board newVisited
+                newNbs = tail nbs -- ++ xnbs
+                -- newTracker = addToTracker (x, y) xnbs tracker
+            in bfsCorral newNbs board newVisited value tracker
+    else
+        getPathFromTracker tracker (head nbs) []-- ++ [head nbs]
 bfsToCorral (x, y) board =
     let tracker = buildBoard (length board) (length (head board)) (-1,-1)
         path = bfsCorral [(x, y)] board [] 3 tracker
-    in if not (null (tail path))
+    in if not(null path) -- && not (null (tail path)) -- && length (tail path) /= 1
         then
             let midPath = deleteElement path (length path -1)
                 (lastx, lasty) = path !! (length path -1)

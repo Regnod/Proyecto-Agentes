@@ -7,11 +7,11 @@ main = do
     typeInput <- getLine
     let type_ = (read typeInput :: Int)
 
-    putStrLn "Please enter amount of maxRounds: "
+    putStrLn "Please enter value of t: "
     tInput <- getLine
     let t = (read tInput :: Int)
 
-    putStrLn "Please enter value of t: "
+    putStrLn "Please enter amount of maxRounds: "
     maxRoundsInput <- getLine
     let maxRounds = (read maxRoundsInput :: Int)
 

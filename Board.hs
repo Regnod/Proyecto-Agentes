@@ -2,6 +2,7 @@ module Board where
 import MyRandom
 import Utils
 import Recorridos (freeBfs)
+import Debug.Trace
 -- x y son las del punto a verificar x1 y1 los limites
 
 rowDim :: (Foldable t, Num b) => t a -> b
@@ -152,7 +153,7 @@ fillRobots board x y amount seed    | amount == 0 = ([], board)
         in (nextRobot : robots, newBoard)
     else
         let (robots, newBoard) = fillRobots board x y amount newSeed
-        in (nextRobot : robots, newBoard)
+        in (robots, newBoard)
 
 step4 r board amount 
     | amount == 0 = ([], board)
@@ -162,7 +163,7 @@ step4 r board amount
                         (robots, newBoard) = fillRobots midBoard x y (amount-1) seed 
                     in (firstRobot:robots, newBoard) --fillRobots newBoard x y (amount-1) seed
 
--- step 5 => robots = 1
+-- step 5 => childs = 1
 fillChilds board x y amount seed    | amount == 0 = ([], board)
                                     | otherwise =   
     let (x1, y1, newSeed) = randomPos seed board
@@ -177,7 +178,7 @@ fillChilds board x y amount seed    | amount == 0 = ([], board)
         in (nextChild : childs, newBoard)
     else
         let (childs, newBoard) = fillChilds board x y amount newSeed
-        in (nextChild : childs, newBoard)
+        in (childs, newBoard)
 
 step5 r board amount 
     | amount == 0 = ([], board)
@@ -188,7 +189,7 @@ step5 r board amount
                     in (firstChild:childs, newBoard)-- fillChilds newBoard x y (amount-1) seed
 -- test
 
-test i = let  (robots, newBoard, childs) = makeBoard 3 4 2 i 1231434 10 10
+test = let  (robots, newBoard, childs) = makeBoard 3 60 2 2 875321564 10 10
         in printBoard (boardToString newBoard)
         -- in newBoard
 

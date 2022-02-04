@@ -71,4 +71,9 @@ checkForNotEmptyBoardAux board x y  | validPos_ x y c l && (spot == 2 || spot ==
 checkForNotEmptyBoard board = checkForNotEmptyBoardAux board 0 0
 
 makeRobotIntel [] = [] 
-makeRobotIntel ((x, y, state):rs) = (x,y,state, []):makeRobotIntel rs 
+makeRobotIntel ((x, y, state):rs) = (x,y,state, (-1,-1)):makeRobotIntel rs 
+
+findTargetByR _ [] _ = ((-1, -1, (-1,-1)), -1)
+findTargetByR (x, y) (t:ts) i  | x1 == x && y1 == y = (t, i)
+                            | otherwise = findTargetByR (x, y) ts (i+1)
+                    where (_, _, (x1, y1)) = t

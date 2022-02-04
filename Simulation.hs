@@ -1,7 +1,7 @@
 module Simulation where
 import Environment ( spawnMultipleDirt )
 import Child ( childMove, getPastPossWithPresentState )
-import SmartRobot ( moveSmartRobot )
+import SmartRobot 
 import DumbRobot ( moveDumbRobot )
 import Debug.Trace ( trace )
 import Board ( boardToString, printBoard, checkHouse, makeBoard )
@@ -20,19 +20,21 @@ myCycleSmartRobot t robots board childs seed targets
     | t == 0 = (board, robots, childs, seed, targets)
     | otherwise =
     --
-        let (midBoard, newRobots, midChilds, newTargets) = moveSmartRobot robots board robots childs targets
+        let (midBoard, newRobots, midChilds, firstTargets) = moveSmartRobot robots board robots childs targets
+            midTargets = fixRobotTargeted robots newRobots firstTargets
             (newBoard, newChilds, newSeed) = childMove midChilds midBoard seed midChilds
+            newTargets = trace(show midChilds++" "++ show newChilds)fixChildTargeted midChilds newChilds midTargets
         in trace ("\n----------------------t-cycle----------------------------\n\n"++boardToString newBoard ) myCycleSmartRobot (t-1) newRobots newBoard newChilds newSeed newTargets
 
 simulate type_ t maxRounds obstacles dirts robot kids seed rows cols
     | type_ == 1 =
     -- DumbRobot simulation
-        let (robots, board, childs) = makeBoard obstacles dirts robot kids seed rows cols
+        let (robots, board, childs) = trace"dumbRobot: " makeBoard obstacles dirts robot kids seed rows cols
             (newBoard, newRobots, newChild, newSeed, newT, newMaxRounds) = trace ("\n----------------------start----------------------------\n\n"++boardToString board) simulationDumbRobot robots board childs maxRounds seed t
         in printBoard (boardToString newBoard++"\n\n La cantidad de unidades de tiempo transcurridas es: "++show (newMaxRounds*t+newT))
     | type_ == 2 =
     -- SmartRobot simulation
-        let (robots, board, childs) = makeBoard obstacles dirts robot kids seed rows cols
+        let (robots, board, childs) = trace "smartRobot" makeBoard obstacles dirts robot kids seed rows cols
             midRobots = makeRobotIntel robots
             (newBoard, newRobots, newChild, newSeed, newTargets, newT, newMaxRounds) = trace ("\n----------------------start----------------------------\n\n"++boardToString board) simulationSmartRobot midRobots board childs maxRounds seed t []
         in printBoard (boardToString newBoard++"\n\n La cantidad de unidades de tiempo transcurridas es: "++show (newMaxRounds*t+newT))
