@@ -1,5 +1,5 @@
 module Child where
-import Utils ( replaceNTH0, validPos_, indexBoard, findNeighbors )
+import Utils ( replaceNTH0, validPos_, indexBoard, findNeighbors, fifty )
 import MyRandom ( myRandom )
 import Board ( boardToString, printBoard )
 
@@ -46,7 +46,7 @@ checkCanMove state  | state == 1 = False
 
 childMove [] board seed newChilds = (board, newChilds, seed)
 childMove (w:ws) board seed childs =
-    let (willMove, newSeed) = (True, seed)--fifty seed
+    let (willMove, newSeed) = fifty seed
         (x, y, state) = w
         canMove = checkCanMove state
     in if willMove && canMove && checkSides w board
@@ -84,9 +84,10 @@ getPastPossWithPresentState [] _ = []
 getPastPossWithPresentState _ [] = []
 getPastPossWithPresentState (pastc:pastcs) (presentc:presentcs) =
     let (x, y, _) = pastc
-        (_, _, state) = presentc
-        newChild = (x, y, state)
-    in newChild:getPastPossWithPresentState pastcs presentcs
+        (x', y', state) = presentc
+    in if x' /= x || y' /= y
+        then (x, y, state):getPastPossWithPresentState pastcs presentcs
+        else getPastPossWithPresentState pastcs presentcs
 test = let  board=[ [0,0,0,2,0,0,0,0,0,4],
                     [0,0,0,5,0,0,0,0,0,0],
                     [0,2,0,0,0,0,0,0,0,2],

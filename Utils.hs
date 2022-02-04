@@ -69,3 +69,6 @@ checkForNotEmptyBoardAux board x y  | validPos_ x y c l && (spot == 2 || spot ==
                                             l = length (head board)
                                             c = length board
 checkForNotEmptyBoard board = checkForNotEmptyBoardAux board 0 0
+
+makeRobotIntel [] = [] 
+makeRobotIntel ((x, y, state):rs) = (x,y,state, []):makeRobotIntel rs 

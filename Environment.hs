@@ -25,6 +25,7 @@ valid3x3Square board (w:ws) e n valids  | validPos r c w && indexBoard x y board
                                                 c = length (head board)
 
 howManyMax c    | c == 1 = 1
+                | c == 0 = 1
                 | c == 2 = 3
                 | otherwise = 6
 
@@ -40,8 +41,8 @@ dirt board positions count seed | count == 0 = (board, seed)
     in dirt newBoard newPositions (count-1) newSeed
 
 spawnDirt board x y seed = 
-    let (empties, childs, square) = valid3x3Square board (square3x3 x y) 0 0 []
-        fullSquare = (x,y):square
+    let (empties, childs, square) = valid3x3Square board ((x, y):(square3x3 x y)) 0 0 []
+        -- fullSquare = square
         howManyChilds = howManyMax childs
         (newSeed, dirtCount) = if howManyChilds == 1 
             then let (condition, midSeed) = fifty seed in if condition then (midSeed, 1) else (midSeed, 0)

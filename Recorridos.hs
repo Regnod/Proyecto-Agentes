@@ -82,6 +82,26 @@ getPathFromTracker tracker (x, y) path =
     in getPathFromTracker tracker x' newPath
     else path
 
+notTargeted _ [] = True
+notTargeted (x, y) (t:ts)   | x == x' && y' == y = False
+                            | otherwise = notTargeted (x, y) ts
+                            where (x', y', _) = t
+
+targeted (x,y) targets = not (notTargeted (x,y) targets)
+
+getPathFromTrackerWithTargets [] _ _ path = path
+getPathFromTrackerWithTargets (p:ps) tracker targets currentPath    
+    | notTargeted p targets = getPathFromTracker tracker p [p]
+    | otherwise = getPathFromTrackerWithTargets ps tracker targets currentPath
+
+prioritizeChildsAux [] childs dirts _ = childs ++ dirts 
+prioritizeChildsAux (p:ps) childs dirts board   | spot == 4 = prioritizeChildsAux ps (childs++[p]) dirts board
+                                                | otherwise = prioritizeChildsAux ps childs (dirts++[p]) board
+                                                where   (x, y) = p
+                                                        spot = indexBoard x y board
+
+prioritizeChilds endPoints board = prioritizeChildsAux endPoints [] [] board
+
 -- bfs para encontrar el corral
 -- bfsCorral :: (Eq a, Num a) => [(Int, Int)]->[[a]]->[(Int, Int)]->a->[[(Int,Int)]]->[(Int, Int)]
 bfsCorral [] _ _ _ _= []
@@ -117,7 +137,7 @@ bfsDumbRobotAux nbs board visited tracker =
     then
     let (x, y) = head nbs
         step_ = indexBoard x y board
-        in if step_ == 0 || step_ == 6 || step_ == 3
+        in if step_ == 0 || step_ == 3
             then
             let newVisited = (x, y) : visited
                 xnbs = getValidNeighbors (x, y) board newVisited
@@ -143,6 +163,44 @@ bfsDumbRobot nbs board visited tracker  | checkForNotEmptyBoard board =
         then tail path
         else []
                                         | otherwise = []
+
+bfsSmartRobot (x, y) board targets | checkForNotEmptyBoard board =
+    let tracker = buildBoard (length board) (length (head board)) (-1,-1)
+        nbs = getValidNeighbors (x, y) board [(x, y)]
+        midTracker = addToTracker (x, y) nbs tracker
+        (firstEndPoints, newTracker) = bfsSmartRobotAux nbs board [(x, y)] midTracker []
+        endPoints = prioritizeChilds firstEndPoints board
+    in if not (null endPoints)
+        then
+            let firstPath =  getPathFromTracker newTracker (head endPoints) [head endPoints]
+                -- haya el camino de menor longitud entre todos los targets posibles
+                path = getPathFromTrackerWithTargets endPoints newTracker targets firstPath
+                (x', y') = last path
+                -- incluir el target si no esta, en caso de estar no hacer nada
+                newTargets = if notTargeted (x', y') targets then (x', y', (x, y)):targets else targets
+            in (tail path, newTargets)
+        else ([], targets)
+                                        | otherwise = ([], targets)
+
+bfsSmartRobotAux [] _ _ tracker endPoints = (endPoints, tracker)
+bfsSmartRobotAux nbs board visited tracker endPoints
+    | step == 2 && notElem (x, y) endPoints =
+        let newVisited = (x, y) : visited
+            xnbs = getValidNeighbors (x, y) board newVisited
+            newNbs = tail nbs ++ xnbs
+            newTracker = addToTracker (x, y) xnbs tracker
+        in bfsSmartRobotAux newNbs board newVisited newTracker (endPoints++[(x, y)])
+    | step == 4 && notElem (x, y) endPoints = bfsSmartRobotAux (tail nbs) board ((x, y):visited) tracker (endPoints++[(x, y)])
+    | step == 0 || step == 3 =
+        let newVisited =  (x, y) : visited
+            xnbs = getValidNeighbors (x, y) board newVisited
+            newNbs = tail nbs ++ xnbs
+            newTracker = addToTracker (x, y) xnbs tracker
+        in bfsSmartRobotAux newNbs board newVisited newTracker endPoints
+    | otherwise = bfsSmartRobotAux (tail nbs) board ((x, y) : visited) tracker endPoints
+    where   (x, y) = head nbs
+            step = indexBoard x y board
+        --getPathFromTracker tracker (head nbs) [] ++ [head nbs]
 -- para evitar el acorralamiento
 freeBfs [] board visited = []
 freeBfs nbs board visited =
@@ -197,19 +255,19 @@ bfsToCorral (x, y) board =
             in (tail finalPath, True)
 emptyList = []
 test =
-    let board =[[0,0,0,0,0,0,0,0,0,0],
+    let board =[[0,4,0,0,0,0,0,0,0,0],
                 [0,0,0,5,0,0,0,0,0,0],
-                [0,0,0,0,0,3,0,3,3,2],
+                [0,0,0,0,0,3,0,3,3,0],
                 [0,0,0,0,3,3,3,3,3,0],
                 [0,0,0,0,3,3,0,3,3,0],
                 [0,0,0,1,0,0,0,3,1,0],
-                [0,0,0,0,0,0,0,0,0,0],
-                [0,0,0,0,0,0,5,0,0,0],
+                [0,0,0,0,2,0,0,0,0,0],
+                [0,0,2,0,0,0,5,0,0,0],
                 [0,0,1,0,0,0,0,0,0,0],
-                [0,0,3,3,0,0,0,0,0,0]]
+                [0,0,3,3,0,4,0,0,0,2]]
         tracker = buildBoard 10 10 (-1,-1)
         start = (3,3)
-        path = checkForNotEmptyBoard board
+        path = bfsSmartRobot start board [(0,1, (4,5))]
         -- path = bfsCorral [start] board [] 3 tracker
         -- path = bfsToCorral start board
         in path

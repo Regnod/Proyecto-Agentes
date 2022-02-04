@@ -123,22 +123,12 @@ moveRobot robot board path longitude childs | longitude > 0 && not (null path) &
     let (oldx, oldy, state) = robot
         (newx, newy) = head path
         (newRobot, newBoard, newChilds)= spotNewPosition robot board (head path) 0 childs
-    in (newBoard, newRobot, newChilds)-- moveRobot newRobot newBoard (tail path) (longitude-1) newChilds
-    -- este es el caso para cuando carga el niño, solo entra aqui en caso de cargar uno
-    --                                     | longitude > 0 && null path && state == 1 =
-    -- let (oldx, oldy, state) = robot
-    --     (newx, newy) = head path
-    --     (newRobot, newBoard, newChilds)= spotNewPosition robot board (head path) 0 childs
-    --     (_, _, currentState) = newRobot
-    --     -- cuando se mueve continua teniendo estado 1 o pasa a estado 3 y cesa el movimiento
-    -- in (newBoard, (0,0,10), newChilds) 
+    in (newBoard, newRobot, newChilds)
                                         | longitude > 0 && not (null path) && state == 1 =
     let (oldx, oldy, state) = robot
         (newx, newy) = head path
         (newRobot, newBoard, newChilds)= spotNewPosition robot board (head path) 0 childs
         (_, _, currentState) = newRobot
-        -- cuando se mueve continua teniendo estado 1 o pasa a estado 3 y cesa el movimiento
-    -- in (newBoard, (0,0,10), newChilds) 
     in if currentState == 3 
         then (newBoard, newRobot, newChilds) 
         else moveRobot newRobot newBoard (tail path) (longitude-1) newChilds
@@ -158,7 +148,7 @@ moveDumbRobot (r:rs) board  robots childs   | state == 2 = --arriba de una sucie
         changedBoard = changePlace board x y 0
         (path, c) = bfsToCorral (x, y) changedBoard
         (newRobot, newBoard, newChilds) =  moveWithChild r board path childs c
-        newRobots = trace (show (newChilds++[newRobot])++"hola") tail robots ++ [newRobot]
+        newRobots = tail robots ++ [newRobot]
     in moveDumbRobot rs newBoard newRobots newChilds
     -- let (x, y, _) = r
     --     tracker = buildBoard (length board) (length (head board)) (-1,-1)
