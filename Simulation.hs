@@ -1,11 +1,11 @@
 module Simulation where
 import Environment ( spawnMultipleDirt )
 import Child ( childMove, getPastPossWithPresentState )
-import SmartRobot 
+import SmartRobot
 import DumbRobot ( moveDumbRobot )
 import Debug.Trace ( trace )
 import Board ( boardToString, printBoard, checkHouse, makeBoard )
-import Utils ( makeRobotIntel )
+import Utils ( makeRobotIntel, calculateRounds )
 
 myCycleDumbRobot t robots board childs seed
     | t == 0 = (board, robots, childs, seed)
@@ -31,13 +31,13 @@ simulate type_ t maxRounds obstacles dirts robot kids seed rows cols
     -- DumbRobot simulation
         let (robots, board, childs) = trace"dumbRobot: " makeBoard obstacles dirts robot kids seed rows cols
             (newBoard, newRobots, newChild, newSeed, newT, newMaxRounds) = trace ("\n----------------------start----------------------------\n\n"++boardToString board) simulationDumbRobot robots board childs maxRounds seed t
-        in printBoard (boardToString newBoard++"\n\n La cantidad de unidades de tiempo transcurridas es: "++show (newMaxRounds*t+newT))
+        in printBoard (boardToString newBoard++"\n\n La cantidad de unidades de tiempo transcurridas es: "++show (calculateRounds maxRounds newMaxRounds t newT))
     | type_ == 2 =
     -- SmartRobot simulation
         let (robots, board, childs) = trace "smartRobot" makeBoard obstacles dirts robot kids seed rows cols
             midRobots = makeRobotIntel robots
             (newBoard, newRobots, newChild, newSeed, newTargets, newT, newMaxRounds) = trace ("\n----------------------start----------------------------\n\n"++boardToString board) simulationSmartRobot midRobots board childs maxRounds seed t []
-        in printBoard (boardToString newBoard++"\n\n La cantidad de unidades de tiempo transcurridas es: "++show (newMaxRounds*t+newT))
+        in printBoard (boardToString newBoard++"\n\n La cantidad de unidades de tiempo transcurridas es: "++show (calculateRounds maxRounds newMaxRounds t newT))
     | otherwise = putStrLn "The type is wrong"
 
 simulationDumbRobot robots board childs times seed t

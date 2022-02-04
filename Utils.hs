@@ -77,3 +77,5 @@ findTargetByR _ [] _ = ((-1, -1, (-1,-1)), -1)
 findTargetByR (x, y) (t:ts) i  | x1 == x && y1 == y = (t, i)
                             | otherwise = findTargetByR (x, y) ts (i+1)
                     where (_, _, (x1, y1)) = t
+
+calculateRounds maxRounds rounds t' t = (maxRounds - rounds)*t' + (t'-t)
