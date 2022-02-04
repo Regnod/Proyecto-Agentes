@@ -19,7 +19,7 @@ getNeighbors [] r c = []
 getNeighbors (x:xs) r c = if validPos r c x then x: getNeighbors xs r c else getNeighbors xs r c
 
 notElement [] _ = []
-notElement (x:xs) visited   | x `notElem` visited = x: notElement xs visited
+notElement (x:xs) visited   | not (elem x visited) = x: notElement xs visited
                             | otherwise = notElement xs visited
 
 getValidNeighbors nb board visited =
@@ -67,7 +67,7 @@ bfs nbs board visited (x0, y0) tracker =
     then
     let (x, y) = head nbs
         newVisited = (x, y) : visited
-        xnbs = getValidNeighbors (x, y) board newVisited
+        xnbs = getValidNeighbors (x, y) board (newVisited++tail nbs)
         newNbs = tail nbs ++ xnbs
         newTracker = addToTracker (x, y) xnbs tracker
     in bfs newNbs board newVisited (x0, y0) newTracker
@@ -115,7 +115,7 @@ bfsCorral nbs board visited value tracker =
         in if step_ == 0
             then
             let newVisited = (x, y) : visited
-                xnbs = getValidNeighbors (x, y) board newVisited
+                xnbs = getValidNeighbors (x, y) board (newVisited++tail nbs)
                 newNbs = tail nbs ++ xnbs
                 newTracker = addToTracker (x, y) xnbs tracker
             in bfsCorral newNbs board newVisited value newTracker
@@ -140,7 +140,7 @@ bfsDumbRobotAux nbs board visited tracker =
         in if step_ == 0 || step_ == 3
             then
             let newVisited = (x, y) : visited
-                xnbs = getValidNeighbors (x, y) board newVisited
+                xnbs = getValidNeighbors (x, y) board (newVisited++tail nbs)
                 newNbs = tail nbs ++ xnbs
                 newTracker = addToTracker (x, y) xnbs tracker
             in bfsDumbRobotAux newNbs board newVisited newTracker
@@ -186,14 +186,14 @@ bfsSmartRobotAux [] _ _ tracker endPoints = (endPoints, tracker)
 bfsSmartRobotAux nbs board visited tracker endPoints
     | step == 2 && notElem (x, y) endPoints =
         let newVisited = (x, y) : visited
-            xnbs = getValidNeighbors (x, y) board newVisited
+            xnbs = getValidNeighbors (x, y) board (newVisited++tail nbs)
             newNbs = tail nbs ++ xnbs
             newTracker = addToTracker (x, y) xnbs tracker
         in bfsSmartRobotAux newNbs board newVisited newTracker (endPoints++[(x, y)])
     | step == 4 && notElem (x, y) endPoints = bfsSmartRobotAux (tail nbs) board ((x, y):visited) tracker (endPoints++[(x, y)])
     | step == 0 || step == 3 =
         let newVisited =  (x, y) : visited
-            xnbs = getValidNeighbors (x, y) board newVisited
+            xnbs = getValidNeighbors (x, y) board (newVisited++tail nbs)
             newNbs = tail nbs ++ xnbs
             newTracker = addToTracker (x, y) xnbs tracker
         in bfsSmartRobotAux newNbs board newVisited newTracker endPoints
@@ -202,16 +202,14 @@ bfsSmartRobotAux nbs board visited tracker endPoints
             step = indexBoard x y board
         --getPathFromTracker tracker (head nbs) [] ++ [head nbs]
 -- para evitar el acorralamiento
-freeBfs [] board visited = []
-freeBfs nbs board visited =
-    if let (x0, y0) = head nbs in (board!!x0)!!y0 /= 0
-    then
-    let (x, y) = head nbs
-        newVisited = (x, y) : visited
-        newNbs = tail nbs ++ getValidNeighbors (x, y) board newVisited
-    in freeBfs newNbs board newVisited
-    else
-        [head nbs]
+freeBfs nbs board visited amount 
+    | amount == 0 = trace "sad" board
+    | otherwise = 
+        let (x, y) = head nbs
+            newVisited = (x, y) : visited
+            newNbs = tail nbs ++ getValidNeighbors (x, y) board (newVisited++tail nbs)
+            newBoard = changePlace board x y 3
+        in freeBfs newNbs newBoard newVisited (amount - 1)
 
 bfsCorralSpotAux [] _ _ tracker last = getPathFromTracker tracker last [] ++ [last]
 bfsCorralSpotAux nbs board visited tracker last =
@@ -220,7 +218,7 @@ bfsCorralSpotAux nbs board visited tracker last =
         in if step_ == 3
             then
             let newVisited = (x, y) : visited
-                xnbs = getValidNeighbors (x, y) board newVisited
+                xnbs = getValidNeighbors (x, y) board (newVisited++tail nbs)
                 newNbs = tail nbs ++ xnbs
                 newTracker = addToTracker (x, y) xnbs tracker
             in bfsCorralSpotAux newNbs board newVisited newTracker (x, y)

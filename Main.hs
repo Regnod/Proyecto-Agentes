@@ -5,9 +5,13 @@ main :: IO ()
 main = do
     putStrLn "Please enter type(1- > for dumbRobot, 2 -> for SmartRobot): "
     typeInput <- getLine
-    let type = (read typeInput :: Int)
+    let type_ = (read typeInput :: Int)
 
     putStrLn "Please enter amount of maxRounds: "
+    tInput <- getLine
+    let t = (read tInput :: Int)
+
+    putStrLn "Please enter value of t: "
     maxRoundsInput <- getLine
     let maxRounds = (read maxRoundsInput :: Int)
 
@@ -27,11 +31,14 @@ main = do
     kidsInput <- getLine
     let kids = (read kidsInput :: Int)
 
-    putStrLn "Please enter amount of rows: "
+    putStrLn "Please enter value of rows: "
     rowsInput <- getLine
     let rows = (read rowsInput :: Int)
 
-    putStrLn "Please enter amount of cols: "
+    putStrLn "Please enter value of cols: "
     colsInput <- getLine
     let cols = (read colsInput :: Int)
-    simulate type t maxRounds obstacles dirts robots kids seed rows cols
+
+    let seed = 875321564
+
+    simulate type_ t maxRounds obstacles dirts robots kids seed rows cols

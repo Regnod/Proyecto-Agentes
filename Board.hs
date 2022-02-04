@@ -1,7 +1,7 @@
 module Board where
 import MyRandom
 import Utils
-
+import Recorridos (freeBfs)
 -- x y son las del punto a verificar x1 y1 los limites
 
 rowDim :: (Foldable t, Num b) => t a -> b
@@ -72,10 +72,6 @@ checkHouse board    | clean >= 60 = True
 
 -- this function build the simulation board with the settings received
 
-makeSimulation settings board = 0
-
-getRandomNumber c o s n r = c + o*2 + s*3 + n*4+ r*5
-
 -- para hacer al final, correr el archivo desde un .py donde se coja una seed random en python y se mande a ejecutar el programa con esa seed como paramtreo asi lidiare con el random y que el tablero sea siempre distinto
 -- corral
 
@@ -98,10 +94,8 @@ fillCorral board x y amount seed| amount == 0 = board
                                                         fillCorral board x y amount newSeed
 
 step1 r board amount =  let (x, y, seed) = randomPos r board
-                            col = board !! x
-                            newCol = replaceNTH0 col y 3
-                            newBoard = replaceNTH0 board x newCol
-                        in fillCorral newBoard x y (amount-1) seed
+                            -- newBoard = changePlace board x y 3
+                        in freeBfs [(x,y)] board [] amount--fillCorral newBoard x y (amount-1) seed
 
 -- step 2 => obstaculos = 1
 fillObstacles board x y amount seed | amount == 0 = board
@@ -116,11 +110,12 @@ fillObstacles board x y amount seed | amount == 0 = board
                                                     else
                                                         fillObstacles board x y amount newSeed
 
-step2 r board amount =  let (x, y, seed) = randomPos r board
-                            col = board !! x
-                            newCol = replaceNTH0 col y 1
-                            newBoard = replaceNTH0 board x newCol
-                        in fillObstacles newBoard x y (amount-1) seed
+step2 r board amount   
+    | amount == 0 = board
+    | otherwise =  
+        let (x, y, seed) = randomPos r board
+            newBoard = changePlace board x y 1
+        in fillObstacles newBoard x y (amount-1) seed
 
 -- step 3 => suciedad = 2
 fillDirty board x y amount seed | amount == 0 = board
@@ -135,11 +130,12 @@ fillDirty board x y amount seed | amount == 0 = board
                                                     else
                                                         fillDirty board x y amount newSeed
 
-step3 r board amount =  let (x, y, seed) = randomPos r board
-                            col = board !! x
-                            newCol = replaceNTH0 col y 2
-                            newBoard = replaceNTH0 board x newCol
-                        in fillDirty newBoard x y (amount-1) seed
+step3 r board amount    
+    | amount == 0 = board
+    | otherwise =  
+        let (x, y, seed) = randomPos r board
+            newBoard = changePlace board x y 1
+        in fillDirty newBoard x y (amount-1) seed
 
 -- step 4 => robots = 5
 fillRobots board x y amount seed    | amount == 0 = ([], board)
@@ -158,13 +154,13 @@ fillRobots board x y amount seed    | amount == 0 = ([], board)
         let (robots, newBoard) = fillRobots board x y amount newSeed
         in (nextRobot : robots, newBoard)
 
-step4 r board amount =  let (x, y, seed) = randomPos r board
-                            col = board !! x
-                            newCol = replaceNTH0 col y 5
-                            midBoard = replaceNTH0 board x newCol
-                            firstRobot = (x, y, 0)
-                            (robots, newBoard) = fillRobots midBoard x y (amount-1) seed 
-                        in (firstRobot:robots, newBoard) --fillRobots newBoard x y (amount-1) seed
+step4 r board amount 
+    | amount == 0 = ([], board)
+    | otherwise =   let (x, y, seed) = randomPos r board
+                        midBoard = changePlace board x y 5
+                        firstRobot = (x, y, 0)
+                        (robots, newBoard) = fillRobots midBoard x y (amount-1) seed 
+                    in (firstRobot:robots, newBoard) --fillRobots newBoard x y (amount-1) seed
 
 -- step 5 => robots = 1
 fillChilds board x y amount seed    | amount == 0 = ([], board)
@@ -183,26 +179,25 @@ fillChilds board x y amount seed    | amount == 0 = ([], board)
         let (childs, newBoard) = fillChilds board x y amount newSeed
         in (nextChild : childs, newBoard)
 
-step5 r board amount =  let (x, y, seed) = randomPos r board
-                            col = board !! x
-                            newCol = replaceNTH0 col y 4
-                            midBoard = replaceNTH0 board x newCol
-                            firstChild = (x, y, 0)
-                            (childs, newBoard) = fillChilds midBoard x y (amount-1) seed
-                        in (firstChild:childs, newBoard)-- fillChilds newBoard x y (amount-1) seed
-
+step5 r board amount 
+    | amount == 0 = ([], board)
+    | otherwise =   let (x, y, seed) = randomPos r board
+                        midBoard = changePlace board x y 4
+                        firstChild = (x, y, 0)
+                        (childs, newBoard) = fillChilds midBoard x y (amount-1) seed
+                    in (firstChild:childs, newBoard)-- fillChilds newBoard x y (amount-1) seed
 -- test
 
-test = let  (robots, newBoard, childs) = makeBoard 3 4 2 2 1231434 10 10
-        -- in printBoard (boardToString newBoard)
-        in newBoard
+test i = let  (robots, newBoard, childs) = makeBoard 3 4 2 i 1231434 10 10
+        in printBoard (boardToString newBoard)
+        -- in newBoard
 
 -- Make Board
 
-makeBoard o s r n seed x y =let board = buildBoard x y 0 -- crear el board
-                                board1 = step1 seed board n -- añadir el corral
-                                board2 = step2 (seed+1) board1 o -- añadir los obstaculos
-                                board3 = step3 (seed-1) board2 s -- añadir los suciedad
-                                (robots, board4) = step4 (seed+2) board3 r -- añadir los robots
-                                (childs, newBoard) = step5 (seed-2) board4 n -- añadir los niños
+makeBoard o s r n seed x y = let    board = buildBoard x y 0 -- crear el board
+                                    board1 = step1 seed board n -- añadir el corral
+                                    board2 = step2 (seed+1) board1 o -- añadir los obstaculos
+                                    board3 = step3 (seed-1) board2 s -- añadir los suciedad
+                                    (robots, board4) = step4 (seed+2) board3 r -- añadir los robots
+                                    (childs, newBoard) = step5 (seed-2) board4 n -- añadir los niños
                             in (robots, newBoard, childs)
