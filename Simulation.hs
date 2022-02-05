@@ -23,7 +23,7 @@ myCycleSmartRobot t robots board childs seed targets
         let (midBoard, newRobots, midChilds, firstTargets) = moveSmartRobot robots board robots childs targets
             midTargets = fixRobotTargeted robots newRobots firstTargets
             (newBoard, newChilds, newSeed) = childMove midChilds midBoard seed midChilds
-            newTargets = trace(show midChilds++" "++ show newChilds)fixChildTargeted midChilds newChilds midTargets
+            newTargets = fixChildTargeted midChilds newChilds midTargets
         in trace ("\n----------------------t-cycle----------------------------\n\n"++boardToString newBoard ) myCycleSmartRobot (t-1) newRobots newBoard newChilds newSeed newTargets
 
 simulate type_ t maxRounds obstacles dirts robot kids seed rows cols
