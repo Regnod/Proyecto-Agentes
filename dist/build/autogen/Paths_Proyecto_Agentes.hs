@@ -30,7 +30,7 @@ version = Version [0,1,0,0] []
 bindir, libdir, dynlibdir, datadir, libexecdir, sysconfdir :: FilePath
 
 bindir     = "/home/regnod/.cabal/bin"
-libdir     = "/home/regnod/.cabal/lib/x86_64-linux-ghc-8.6.5/Proyecto-Agentes-0.1.0.0-4Iwa7q1vNgz4RB4z9WLAtd"
+libdir     = "/home/regnod/.cabal/lib/x86_64-linux-ghc-8.6.5/Proyecto-Agentes-0.1.0.0-Kwka1NrdSzVYoQ8SoJMUx"
 dynlibdir  = "/home/regnod/.cabal/lib/x86_64-linux-ghc-8.6.5"
 datadir    = "/home/regnod/.cabal/share/x86_64-linux-ghc-8.6.5/Proyecto-Agentes-0.1.0.0"
 libexecdir = "/home/regnod/.cabal/libexec/x86_64-linux-ghc-8.6.5/Proyecto-Agentes-0.1.0.0"

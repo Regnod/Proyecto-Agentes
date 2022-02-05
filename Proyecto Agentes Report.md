@@ -4,6 +4,8 @@ Richard García De la Osa C412
 
 Git link: https://github.com/Regnod/Proyecto-Agentes.git.
 
+Use cabal para el desarrollo del proyecto.
+
 ###### Orden del Problema Asignado
 
 1. Marco General
